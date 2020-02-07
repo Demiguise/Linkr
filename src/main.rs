@@ -3,13 +3,17 @@ use yaml_rust::YamlLoader;
 use std::fs::File;
 use std::io::prelude::*;
 
-fn main()
+fn load_config(filename: &str) -> Result<Vec<yaml_rust::Yaml>, yaml_rust::ScanError>
 {
-    let mut file = File::open(".linkr").unwrap();
+    let mut file = File::open(filename).unwrap();
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
 
-    let cfg = YamlLoader::load_from_str(&contents).unwrap();
+    YamlLoader::load_from_str(&contents)
+}
 
+fn main()
+{
+    let cfg = load_config(".linkr").unwrap();
     println!("{:?}", cfg);
 }
