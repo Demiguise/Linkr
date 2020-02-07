@@ -1,0 +1,11 @@
+---
+vim:
+  symlink:
+    dir: yes
+    from: "some/relative/directory"
+    to: "/some/absolute/directory"
+
+  copy:
+    dir: no
+    from: "somefile"
+    to: "/some/place/"
