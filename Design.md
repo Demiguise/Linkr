@@ -17,6 +17,8 @@
 - Not enough permissions to perform the task.
 - File already exists.
 - Symlink already exists.
+- Incorrect YAML syntax.
+- Incorrect/Missing properties from 'Modules'.
 
 ## Feature Thoughts
 
@@ -30,3 +32,10 @@
 - MUST be able to use system calls to perform symlinks.
 - MUST be able to use system calls to perform file copies.
 - MUST handle permission errors when working without SUDO.
+- MUST have a pretty printed output when performing tasks.
+- MUST have a quiet flag to suppress pretty printing output.
+
+## General Thoughts
+
+We can parse the YAML syntax and build up an in-memory representation of the actions to perform, then perform them.
+This would give us the ability to reject malformed actions before taking ANY, which is good at protecting user configurations from being partially initialised.

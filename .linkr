@@ -9,3 +9,9 @@ vim:
     dir: no
     from: "somefile"
     to: "/some/place/"
+
+neovim:
+  symlink:
+    dir: no
+    from: "Your face"
+    to: "Your other face"

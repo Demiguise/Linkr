@@ -1,10 +1,11 @@
-extern crate yaml_rust;
-#[macro_use]
-extern crate error_chain;
-use yaml_rust::{Yaml, YamlLoader};
 use std::fs::File;
 use std::io::prelude::*;
 
+extern crate yaml_rust;
+use yaml_rust::{Yaml, YamlLoader};
+
+#[macro_use]
+extern crate error_chain;
 mod errors {
     error_chain! { }
 }
@@ -21,7 +22,7 @@ fn load_config(filename: &str) -> Result<Option<Yaml>>
         .chain_err(|| "Unable to read contents of file")?;
 
     let data = YamlLoader::load_from_str(&contents)
-        .chain_err(|| "Failed to parse conents as YAML")?;
+        .chain_err(|| "Failed to parse contents as YAML")?;
 
     Ok(data.into_iter().nth(0))
 }
@@ -51,13 +52,34 @@ fn main()
     }
 }
 
+fn process(node: &Yaml) -> Result <()>
+{
+    match *node
+    {
+        Yaml::Hash(ref hash) =>
+        {
+            for (k, v) in hash
+            {
+                println!("{:?}", k);
+                process(v);
+            }
+        }
+        _ =>
+        {
+
+        }
+    }
+
+    Ok(())
+}
+
 fn run() -> Result<()>
 {
     let cfg = load_config(".linkr")?;
 
-    for block in cfg
+    for block in cfg.iter()
     {
-        println!("{:?}\n---", block);
+        process(block);
     }
 
     Ok(())
