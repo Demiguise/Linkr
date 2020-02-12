@@ -14,6 +14,9 @@ mod errors {
 }
 use errors::*;
 
+mod symlink;
+mod copy;
+
 fn load_config(filename: &str) -> Result<Option<Yaml>>
 {
     let mut file = File::open(filename)
@@ -54,6 +57,49 @@ fn main()
     }
 }
 
+fn process_module(module: &str, node: &Yaml) -> Result<()>
+{
+    match module
+    {
+        "symlink" =>
+        {
+            println!("Processing a symlink");
+            symlink::process(node);
+        }
+        "copy" =>
+        {
+            println!("Processing a copy");
+            copy::process(node);
+        }
+        _ =>
+        {
+        }
+    }
+    Ok(())
+}
+
+fn process_block(node: &Yaml) -> Result<()>
+{
+    match *node
+    {
+        Yaml::Hash(ref hash) =>
+        {
+            for (k, v) in hash
+            {
+                let module_name = k.as_str()
+                    .chain_err(|| "Unable to parse module name as a string")?;
+
+                process_module(module_name, v)?;
+            }
+        }
+        _ =>
+        {
+
+        }
+    }
+    Ok(())
+}
+
 fn process(node: &Yaml) -> Result <()>
 {
     match *node
@@ -66,6 +112,7 @@ fn process(node: &Yaml) -> Result <()>
                     .chain_err(|| "Unable to parse top level block name as a string")?;
 
                 println!("Top Level: {}", block_name);
+                process_block(v)?;
             }
         }
         _ =>
