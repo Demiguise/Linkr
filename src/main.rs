@@ -1,15 +1,17 @@
+//Setup file handling
 use std::fs::File;
 use std::io::prelude::*;
 
+//YAML modules
 extern crate yaml_rust;
 use yaml_rust::{Yaml, YamlLoader};
 
+//Error chain setup
 #[macro_use]
 extern crate error_chain;
 mod errors {
     error_chain! { }
 }
-
 use errors::*;
 
 fn load_config(filename: &str) -> Result<Option<Yaml>>
@@ -60,8 +62,10 @@ fn process(node: &Yaml) -> Result <()>
         {
             for (k, v) in hash
             {
-                println!("{:?}", k);
-                process(v);
+                let block_name = k.as_str()
+                    .chain_err(|| "Unable to parse top level block name as a string")?;
+
+                println!("Top Level: {}", block_name);
             }
         }
         _ =>
@@ -79,7 +83,7 @@ fn run() -> Result<()>
 
     for block in cfg.iter()
     {
-        process(block);
+        process(block)?;
     }
 
     Ok(())
