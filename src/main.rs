@@ -10,7 +10,7 @@ use yaml_rust::{Yaml, YamlLoader};
 #[macro_use]
 extern crate error_chain;
 mod errors;
-use errors::*;
+use crate::errors::{Error, ErrorKind, ResultExt};
 
 mod symlink;
 mod copy;
@@ -21,7 +21,7 @@ enum ActionTypes
     Copy(copy::Action),
 }
 
-fn load_config(filename: &str) -> Result<Yaml>
+fn load_config(filename: &str) -> Result<Yaml, Error>
 {
     let mut file = File::open(filename)
         .chain_err(|| "Unable to open file")?;
@@ -65,7 +65,7 @@ fn main()
     }
 }
 
-fn process(node: &Yaml, block_name: &str, actions: &mut Vec<ActionTypes>) -> Result<()>
+fn process(node: &Yaml, block_name: &str, actions: &mut Vec<ActionTypes>) -> Result<(), Error>
 {
     match *node
     {
@@ -86,23 +86,24 @@ fn process(node: &Yaml, block_name: &str, actions: &mut Vec<ActionTypes>) -> Res
                     "copy" =>
                     {
                         println!("Processing a copy");
-                        actions.push(ActionTypes::Copy(copy::process(v)));
+                        actions.push(ActionTypes::Copy(copy::process(v, block_name)?));
                     }
                     _ =>
                     {
+                        return Err(ErrorKind::Msg(format!("Unknown module [{}] for [{}]", module_name, block_name).to_string()).into());
                     }
                 }
             }
         }
         _ =>
         {
-
+            return Err(ErrorKind::Msg(format!("Expected module block for [{}]", block_name).to_string()).into());
         }
     }
     Ok(())
 }
 
-fn run() -> Result<()>
+fn run() -> Result<(), Error>
 {
     let cfg = load_config(".linkr")?;
     let mut actions = Vec::<ActionTypes>::new();
@@ -121,7 +122,7 @@ fn run() -> Result<()>
         }
         _ =>
         {
-
+            return Err(ErrorKind::Msg("Expected YAML hash map".to_string()).into());
         }
     }
 
@@ -133,9 +134,9 @@ fn run() -> Result<()>
             {
                 symlink::execute(item)?;
             }
-            ActionTypes::Copy(ref item) =>
+            ActionTypes::Copy(item) =>
             {
-                println!("Executing the copy!");
+                copy::execute(item)?;
             }
         }
     }
