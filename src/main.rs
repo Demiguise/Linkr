@@ -9,15 +9,17 @@ use yaml_rust::{Yaml, YamlLoader};
 //Error chain setup
 #[macro_use]
 extern crate error_chain;
-mod errors {
-    error_chain! { }
+mod errors
+{
+    error_chain!
+    { }
 }
 use errors::*;
 
 mod symlink;
 mod copy;
 
-fn load_config(filename: &str) -> Result<Option<Yaml>>
+fn load_config(filename: &str) -> Result<Yaml>
 {
     let mut file = File::open(filename)
         .chain_err(|| "Unable to open file")?;
@@ -29,7 +31,11 @@ fn load_config(filename: &str) -> Result<Option<Yaml>>
     let data = YamlLoader::load_from_str(&contents)
         .chain_err(|| "Failed to parse contents as YAML")?;
 
-    Ok(data.into_iter().nth(0))
+    match data.into_iter().nth(0)
+    {
+        Some(i) => { Ok(i) }
+        None => { Err("Contents contained no YAML".into()) }
+    }
 }
 
 fn main()
@@ -127,11 +133,5 @@ fn process(node: &Yaml) -> Result <()>
 fn run() -> Result<()>
 {
     let cfg = load_config(".linkr")?;
-
-    for block in cfg.iter()
-    {
-        process(block)?;
-    }
-
-    Ok(())
+    process(&cfg)
 }
