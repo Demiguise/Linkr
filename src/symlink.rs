@@ -47,6 +47,6 @@ pub fn process(node: &Yaml, block_name: &str) -> Result<Action, Error>
 
 pub fn execute(action: Action) -> Result<(), Error>
 {
-  println!("Executing the symlink!");
+  println!("[Symlink] ({}) => ({})", action.from, action.to);
   Ok(())
 }
