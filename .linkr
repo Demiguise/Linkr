@@ -1,17 +1,17 @@
 ---
 vim:
   symlink:
-    dir: yes
+    dir: true
     from: "some/relative/directory"
     to: "/some/absolute/directory"
 
   copy:
-    dir: no
+    dir: false
     from: "somefile"
     to: "/some/place/"
 
 neovim:
   symlink:
-    dir: no
+    dir: false
     from: "Your face"
     to: "Your other face"

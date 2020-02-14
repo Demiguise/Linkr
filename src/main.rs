@@ -9,15 +9,17 @@ use yaml_rust::{Yaml, YamlLoader};
 //Error chain setup
 #[macro_use]
 extern crate error_chain;
-mod errors
-{
-    error_chain!
-    { }
-}
+mod errors;
 use errors::*;
 
 mod symlink;
 mod copy;
+
+enum ActionTypes
+{
+    Symlink(symlink::Action),
+    Copy(copy::Action),
+}
 
 fn load_config(filename: &str) -> Result<Yaml>
 {
@@ -63,28 +65,7 @@ fn main()
     }
 }
 
-fn process_module(module: &str, node: &Yaml) -> Result<()>
-{
-    match module
-    {
-        "symlink" =>
-        {
-            println!("Processing a symlink");
-            symlink::process(node);
-        }
-        "copy" =>
-        {
-            println!("Processing a copy");
-            copy::process(node);
-        }
-        _ =>
-        {
-        }
-    }
-    Ok(())
-}
-
-fn process_block(node: &Yaml) -> Result<()>
+fn process(node: &Yaml, block_name: &str, actions: &mut Vec<ActionTypes>) -> Result<()>
 {
     match *node
     {
@@ -95,7 +76,22 @@ fn process_block(node: &Yaml) -> Result<()>
                 let module_name = k.as_str()
                     .chain_err(|| "Unable to parse module name as a string")?;
 
-                process_module(module_name, v)?;
+                match module_name
+                {
+                    "symlink" =>
+                    {
+                        println!("Processing a symlink");
+                        actions.push(ActionTypes::Symlink(symlink::process(v, block_name)?));
+                    }
+                    "copy" =>
+                    {
+                        println!("Processing a copy");
+                        actions.push(ActionTypes::Copy(copy::process(v)));
+                    }
+                    _ =>
+                    {
+                    }
+                }
             }
         }
         _ =>
@@ -106,9 +102,12 @@ fn process_block(node: &Yaml) -> Result<()>
     Ok(())
 }
 
-fn process(node: &Yaml) -> Result <()>
+fn run() -> Result<()>
 {
-    match *node
+    let cfg = load_config(".linkr")?;
+    let mut actions = Vec::<ActionTypes>::new();
+
+    match &cfg
     {
         Yaml::Hash(ref hash) =>
         {
@@ -117,8 +116,7 @@ fn process(node: &Yaml) -> Result <()>
                 let block_name = k.as_str()
                     .chain_err(|| "Unable to parse top level block name as a string")?;
 
-                println!("Top Level: {}", block_name);
-                process_block(v)?;
+                process(v, block_name, &mut actions)?;
             }
         }
         _ =>
@@ -127,11 +125,20 @@ fn process(node: &Yaml) -> Result <()>
         }
     }
 
-    Ok(())
-}
+    for action in actions
+    {
+        match action
+        {
+            ActionTypes::Symlink(item) =>
+            {
+                symlink::execute(item)?;
+            }
+            ActionTypes::Copy(ref item) =>
+            {
+                println!("Executing the copy!");
+            }
+        }
+    }
 
-fn run() -> Result<()>
-{
-    let cfg = load_config(".linkr")?;
-    process(&cfg)
+    Ok(())
 }
