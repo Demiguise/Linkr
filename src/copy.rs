@@ -60,7 +60,9 @@ pub fn process(node: &Yaml, block_name: &str) -> Result<Action, Error>
 
 pub fn execute(action: Action) -> Result<(), Error>
 {
-  println!("[Copy] ({}) => ({})", action.from, action.to);
-  fs::copy(action.from, action.to)?;
-  Ok(())
+  match fs::copy(action.from, action.to).map_err(|e| Error::with_chain(e, format!("Failed to copy ({}) => ({})", action.from, action.to).to_string()))
+  {
+    Err(e) => { Err(e) }
+    Ok(_) => { Ok(()) }
+  }
 }
